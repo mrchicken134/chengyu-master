@@ -1,0 +1,23 @@
+{
+  "name": "chengyu-master",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "cnchar-idiom": "3.2.6",
+    "lucide-react": "0.468.0",
+    "pinyin-pro": "3.28.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "5.1.1",
+    "vite": "7.2.7"
+  }
+}
