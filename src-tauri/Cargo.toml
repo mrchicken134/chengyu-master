@@ -1,0 +1,23 @@
+[package]
+name = "chengyu-master"
+version = "1.0.0"
+description = "按拼音声母、韵母、声调和常用度筛选中文成语的离线桌面工具"
+authors = ["mrchicken134"]
+edition = "2021"
+
+[lib]
+name = "chengyu_master_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
