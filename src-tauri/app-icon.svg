@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffdf7"/>
+      <stop offset="1" stop-color="#eee7d9"/>
+    </linearGradient>
+    <linearGradient id="seal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#bd5a45"/>
+      <stop offset="1" stop-color="#7e3024"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="190" fill="url(#paper)"/>
+  <rect x="122" y="122" width="780" height="780" rx="122" fill="url(#seal)"/>
+  <rect x="160" y="160" width="704" height="704" rx="92" fill="none" stroke="#fff5e8" stroke-width="20" opacity=".68"/>
+  <text x="512" y="680" text-anchor="middle" fill="#fff8ed" font-family="SimSun, STSong, serif" font-size="500" font-weight="700">语</text>
+</svg>
