@@ -37,10 +37,22 @@ test('zero-initial rule matches syllables without an initial', () => {
 });
 
 test('phonetic text input accepts common ü and zero-initial aliases', () => {
-  assert.equal(normalizePhoneticInput('final', ' VAN '), 'üan');
-  assert.equal(normalizePhoneticInput('final', 'u:e'), 'üe');
+  assert.equal(normalizePhoneticInput('final', ' VAN '), 'uan');
+  assert.equal(normalizePhoneticInput('final', 'u:e'), 'ue');
+  assert.equal(normalizePhoneticInput('final', 'üan'), 'uan');
+  assert.equal(normalizePhoneticInput('final', 'uan'), 'uan');
   assert.equal(normalizePhoneticInput('initial', '∅'), '_zero');
   assert.equal(normalizePhoneticInput('initial', ' ZH '), 'zh');
+});
+
+test('u, v and ü use the same final when filtering', () => {
+  const entry = annotateIdiom('女中豪杰');
+  assert.equal(entry.syllables[0].final, 'u');
+  for (const final of ['u', 'v', 'ü']) {
+    const normalizedFinal = normalizePhoneticInput('final', final);
+    assert.equal(matchesRule(entry, { character: '', initial: 'n', final: normalizedFinal, tone: '3' }, 0), true);
+    assert.equal(matchesAnySyllable(entry, { initial: '', final: normalizedFinal }), true);
+  }
 });
 
 test('global filters start with four include and six exclude rows', () => {

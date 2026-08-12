@@ -42,6 +42,10 @@ export function stripTone(value = '') {
   return [...value].map((character) => TONE_MARKS[character] ?? character).join('');
 }
 
+function normalizeU(value = '') {
+  return value.replaceAll('u:', 'u').replaceAll('v', 'u').replaceAll('\u00fc', 'u');
+}
+
 export function createEmptyRule() {
   return { character: '', initial: '', final: '', tone: '' };
 }
@@ -56,7 +60,7 @@ export function createEmptyGlobalRules() {
 export function normalizePhoneticInput(field, value = '') {
   const normalized = value.trim().toLowerCase();
   if (field === 'initial' && ['零声母', '零', '0', '∅'].includes(normalized)) return '_zero';
-  if (field === 'final') return normalized.replaceAll('u:', 'ü').replaceAll('v', 'ü');
+  if (field === 'final') return normalizeU(normalized);
   return normalized;
 }
 
@@ -73,7 +77,7 @@ export function annotateIdiom(word) {
       character: sound.origin,
       pinyin: sound.pinyin,
       initial: sound.initial,
-      final: stripTone(sound.final),
+      final: normalizeU(stripTone(sound.final)),
       tone: String(sound.num || 0),
     })),
   };
@@ -118,7 +122,7 @@ function activeGlobalConditions(conditions = []) {
 }
 
 export function filterIdioms(corpus, { length, keyword, rules, globalRules = {}, commonness = 'all' }) {
-  const cleanKeyword = keyword.trim().toLowerCase();
+  const cleanKeyword = normalizeU(stripTone(keyword.trim().toLowerCase()));
   const compactKeyword = cleanKeyword.replaceAll(' ', '');
   const includeConditions = activeGlobalConditions(globalRules.include);
   const excludeConditions = activeGlobalConditions(globalRules.exclude);
@@ -126,7 +130,7 @@ export function filterIdioms(corpus, { length, keyword, rules, globalRules = {},
     if (length && entry.length !== length) return false;
     if (commonness !== 'all' && entry.commonness !== commonness) return false;
     if (cleanKeyword) {
-      const plainPinyin = stripTone(entry.pinyin).toLowerCase();
+      const plainPinyin = normalizeU(stripTone(entry.pinyin).toLowerCase());
       if (!entry.word.includes(cleanKeyword)
         && !plainPinyin.includes(cleanKeyword)
         && !plainPinyin.replaceAll(' ', '').includes(compactKeyword)) return false;
