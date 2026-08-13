@@ -42,8 +42,13 @@ export function stripTone(value = '') {
   return [...value].map((character) => TONE_MARKS[character] ?? character).join('');
 }
 
-function normalizeU(value = '') {
-  return value.replaceAll('u:', 'u').replaceAll('v', 'u').replaceAll('\u00fc', 'u');
+function normalizeUmlaut(value = '') {
+  return value.replaceAll('u:', '\u00fc').replaceAll('v', '\u00fc');
+}
+
+function finalMatchesInput(actualFinal, inputFinal) {
+  return actualFinal === inputFinal
+    || (inputFinal.includes('u') && actualFinal === inputFinal.replaceAll('u', '\u00fc'));
 }
 
 export function createEmptyRule() {
@@ -60,7 +65,7 @@ export function createEmptyGlobalRules() {
 export function normalizePhoneticInput(field, value = '') {
   const normalized = value.trim().toLowerCase();
   if (field === 'initial' && ['零声母', '零', '0', '∅'].includes(normalized)) return '_zero';
-  if (field === 'final') return normalizeU(normalized);
+  if (field === 'final') return normalizeUmlaut(normalized);
   return normalized;
 }
 
@@ -77,7 +82,7 @@ export function annotateIdiom(word) {
       character: sound.origin,
       pinyin: sound.pinyin,
       initial: sound.initial,
-      final: normalizeU(stripTone(sound.final)),
+      final: stripTone(sound.final),
       tone: String(sound.num || 0),
     })),
   };
@@ -103,7 +108,7 @@ export function matchesRule(entry, rule, position) {
   if (!syllable) return false;
   return (!rule.character || syllable.character === rule.character)
     && (!rule.initial || (rule.initial === '_zero' ? syllable.initial === '' : syllable.initial === rule.initial))
-    && (!rule.final || syllable.final === rule.final)
+    && (!rule.final || finalMatchesInput(syllable.final, rule.final))
     && (!rule.tone || syllable.tone === rule.tone);
 }
 
@@ -112,7 +117,7 @@ export function matchesAnySyllable(entry, { initial = '', final = '' }) {
   return entry.syllables.some((syllable) => {
     const initialMatches = initial
       && (initial === '_zero' ? syllable.initial === '' : syllable.initial === initial);
-    const finalMatches = final && syllable.final === final;
+    const finalMatches = final && finalMatchesInput(syllable.final, final);
     return Boolean(initialMatches || finalMatches);
   });
 }
@@ -122,7 +127,7 @@ function activeGlobalConditions(conditions = []) {
 }
 
 export function filterIdioms(corpus, { length, keyword, rules, globalRules = {}, commonness = 'all' }) {
-  const cleanKeyword = normalizeU(stripTone(keyword.trim().toLowerCase()));
+  const cleanKeyword = normalizeUmlaut(stripTone(keyword.trim().toLowerCase()));
   const compactKeyword = cleanKeyword.replaceAll(' ', '');
   const includeConditions = activeGlobalConditions(globalRules.include);
   const excludeConditions = activeGlobalConditions(globalRules.exclude);
@@ -130,10 +135,14 @@ export function filterIdioms(corpus, { length, keyword, rules, globalRules = {},
     if (length && entry.length !== length) return false;
     if (commonness !== 'all' && entry.commonness !== commonness) return false;
     if (cleanKeyword) {
-      const plainPinyin = normalizeU(stripTone(entry.pinyin).toLowerCase());
+      const plainPinyin = stripTone(entry.pinyin).toLowerCase();
+      const umlautKeyword = cleanKeyword.includes('u') ? cleanKeyword.replaceAll('u', '\u00fc') : cleanKeyword;
+      const compactUmlautKeyword = umlautKeyword.replaceAll(' ', '');
       if (!entry.word.includes(cleanKeyword)
         && !plainPinyin.includes(cleanKeyword)
-        && !plainPinyin.replaceAll(' ', '').includes(compactKeyword)) return false;
+        && !plainPinyin.replaceAll(' ', '').includes(compactKeyword)
+        && !plainPinyin.includes(umlautKeyword)
+        && !plainPinyin.replaceAll(' ', '').includes(compactUmlautKeyword)) return false;
     }
     if (!includeConditions.every((condition) => matchesAnySyllable(entry, condition))) return false;
     if (excludeConditions.some((condition) => matchesAnySyllable(entry, condition))) return false;

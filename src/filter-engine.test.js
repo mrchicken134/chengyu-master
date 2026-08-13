@@ -37,22 +37,36 @@ test('zero-initial rule matches syllables without an initial', () => {
 });
 
 test('phonetic text input accepts common ü and zero-initial aliases', () => {
-  assert.equal(normalizePhoneticInput('final', ' VAN '), 'uan');
-  assert.equal(normalizePhoneticInput('final', 'u:e'), 'ue');
-  assert.equal(normalizePhoneticInput('final', 'üan'), 'uan');
+  assert.equal(normalizePhoneticInput('final', ' VAN '), 'üan');
+  assert.equal(normalizePhoneticInput('final', 'u:e'), 'üe');
+  assert.equal(normalizePhoneticInput('final', 'üan'), 'üan');
   assert.equal(normalizePhoneticInput('final', 'uan'), 'uan');
   assert.equal(normalizePhoneticInput('initial', '∅'), '_zero');
   assert.equal(normalizePhoneticInput('initial', ' ZH '), 'zh');
 });
 
-test('u, v and ü use the same final when filtering', () => {
-  const entry = annotateIdiom('女中豪杰');
-  assert.equal(entry.syllables[0].final, 'u');
-  for (const final of ['u', 'v', 'ü']) {
-    const normalizedFinal = normalizePhoneticInput('final', final);
-    assert.equal(matchesRule(entry, { character: '', initial: 'n', final: normalizedFinal, tone: '3' }, 0), true);
-    assert.equal(matchesAnySyllable(entry, { initial: '', final: normalizedFinal }), true);
-  }
+test('v means ü while u searches both u and ü finals', () => {
+  const umlautEntry = annotateIdiom('女中豪杰');
+  const uEntry = annotateIdiom('路不拾遗');
+  assert.equal(umlautEntry.syllables[0].final, 'ü');
+  assert.equal(uEntry.syllables[0].final, 'u');
+
+  const vFinal = normalizePhoneticInput('final', 'v');
+  assert.equal(vFinal, 'ü');
+  assert.equal(matchesRule(umlautEntry, { character: '', initial: 'n', final: vFinal, tone: '3' }, 0), true);
+  assert.equal(matchesRule(uEntry, { character: '', initial: 'l', final: vFinal, tone: '4' }, 0), false);
+
+  const uFinal = normalizePhoneticInput('final', 'u');
+  assert.equal(matchesAnySyllable(umlautEntry, { initial: '', final: uFinal }), true);
+  assert.equal(matchesAnySyllable(uEntry, { initial: '', final: uFinal }), true);
+});
+
+test('keyword u also finds pinyin ü while v remains an ü alias', () => {
+  const corpus = ['女中豪杰', '路不拾遗'].map(annotateIdiom);
+  const baseOptions = { length: 4, rules: [], globalRules: createEmptyGlobalRules() };
+  assert.deepEqual(filterIdioms(corpus, { ...baseOptions, keyword: 'nu' }).map((item) => item.word), ['女中豪杰']);
+  assert.deepEqual(filterIdioms(corpus, { ...baseOptions, keyword: 'nv' }).map((item) => item.word), ['女中豪杰']);
+  assert.deepEqual(filterIdioms(corpus, { ...baseOptions, keyword: 'lu' }).map((item) => item.word), ['路不拾遗']);
 });
 
 test('global filters start with four include and six exclude rows', () => {
